@@ -1,7 +1,6 @@
 import { Stack } from 'expo-router';
 import { useColorScheme } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import '../global.css';
 
 export default function Layout() {
     const colorScheme = useColorScheme();
