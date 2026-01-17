@@ -1,7 +1,7 @@
 import { useLocalSearchParams, Stack, router } from 'expo-router';
 import { View, ActivityIndicator, TouchableOpacity, Text, StyleSheet, Dimensions, Alert } from 'react-native';
 import { WebView } from 'react-native-webview';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import * as FileSystem from 'expo-file-system/legacy';
 
 export default function Viewer() {
@@ -11,7 +11,7 @@ export default function Viewer() {
     const [error, setError] = useState<string | null>(null);
 
     // Load PDF as base64 for WebView
-    useState(() => {
+    useEffect(() => {
         const loadPdf = async () => {
             try {
                 if (!uri) {
@@ -32,7 +32,7 @@ export default function Viewer() {
             }
         };
         loadPdf();
-    });
+    }, [uri]);
 
     // Using Google Docs viewer as fallback for remote PDFs
     // For local PDFs, embed directly in WebView

@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, ScrollView, Alert, Image, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Alert, Image, ActivityIndicator, StyleSheet, useColorScheme } from 'react-native';
 import { Stack } from 'expo-router';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useState, useRef } from 'react';
@@ -12,6 +12,8 @@ interface CapturedImage {
 }
 
 export default function ScanDocumentScreen() {
+    const colorScheme = useColorScheme();
+    const isDark = colorScheme === 'dark';
     const [permission, requestPermission] = useCameraPermissions();
     const [images, setImages] = useState<CapturedImage[]>([]);
     const [showCamera, setShowCamera] = useState(false);
@@ -20,7 +22,7 @@ export default function ScanDocumentScreen() {
 
     if (!permission) {
         return (
-            <View className="flex-1 items-center justify-center bg-white">
+            <View className={`flex-1 items-center justify-center ${isDark ? 'bg-slate-900' : 'bg-white'}`}>
                 <ActivityIndicator size="large" color="#3b82f6" />
             </View>
         );
@@ -28,14 +30,22 @@ export default function ScanDocumentScreen() {
 
     if (!permission.granted) {
         return (
-            <View className="flex-1 items-center justify-center bg-white p-4">
-                <Stack.Screen options={{ title: 'Scan Document' }} />
-                <Text className="text-slate-700 text-lg mb-4 text-center">
+            <View className={`flex-1 items-center justify-center p-4 ${isDark ? 'bg-slate-900' : 'bg-white'}`}>
+                <Stack.Screen
+                    options={{
+                        title: 'Scan Document',
+                        headerStyle: { backgroundColor: isDark ? '#1e293b' : '#ffffff' },
+                        headerTintColor: isDark ? '#f1f5f9' : '#1e293b',
+                    }}
+                />
+                <Text className="text-5xl mb-4">📷</Text>
+                <Text className={`text-lg mb-4 text-center ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
                     Camera access is required to scan documents
                 </Text>
                 <TouchableOpacity
                     onPress={requestPermission}
-                    className="bg-blue-600 p-4 rounded-xl"
+                    className="bg-blue-600 p-4 rounded-2xl"
+                    style={{ shadowColor: '#3b82f6', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 8 }}
                 >
                     <Text className="text-white font-bold text-lg">Grant Permission</Text>
                 </TouchableOpacity>
@@ -158,8 +168,14 @@ export default function ScanDocumentScreen() {
     }
 
     return (
-        <View className="flex-1 bg-white p-4">
-            <Stack.Screen options={{ title: 'Scan Document' }} />
+        <View className={`flex-1 ${isDark ? 'bg-slate-900' : 'bg-white'} p-4`}>
+            <Stack.Screen
+                options={{
+                    title: 'Scan Document',
+                    headerStyle: { backgroundColor: isDark ? '#1e293b' : '#ffffff' },
+                    headerTintColor: isDark ? '#f1f5f9' : '#1e293b',
+                }}
+            />
 
             {loading && (
                 <View className="absolute inset-0 z-50 bg-black/50 items-center justify-center">
@@ -170,12 +186,13 @@ export default function ScanDocumentScreen() {
 
             <TouchableOpacity
                 onPress={() => setShowCamera(true)}
-                className="bg-blue-600 p-4 rounded-xl mb-4 items-center"
+                className="bg-blue-600 p-5 rounded-2xl mb-4 items-center"
+                style={{ shadowColor: '#3b82f6', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 8 }}
             >
                 <Text className="text-white font-bold text-lg">📷 Open Camera</Text>
             </TouchableOpacity>
 
-            <Text className="text-slate-600 font-semibold mb-2">
+            <Text className={`font-semibold mb-2 ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
                 Captured Images ({images.length})
             </Text>
 
@@ -199,7 +216,8 @@ export default function ScanDocumentScreen() {
 
                 {images.length === 0 && (
                     <View className="items-center justify-center py-12">
-                        <Text className="text-slate-400 text-center">
+                        <Text className="text-5xl mb-4">📷</Text>
+                        <Text className={`text-center ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                             No images captured yet.{'\n'}Tap "Open Camera" to start scanning.
                         </Text>
                     </View>
@@ -213,21 +231,27 @@ export default function ScanDocumentScreen() {
                             setImages([]);
                             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                         }}
-                        className="bg-slate-200 p-4 rounded-xl items-center"
+                        className={`p-4 rounded-xl items-center ${isDark ? 'bg-slate-800' : 'bg-slate-200'}`}
                     >
-                        <Text className="text-slate-700 font-bold text-lg">Clear All</Text>
+                        <Text className={`font-bold text-lg ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>Clear All</Text>
                     </TouchableOpacity>
                 )}
 
                 <TouchableOpacity
                     onPress={convertToPdf}
                     disabled={images.length === 0}
-                    className={`p-4 rounded-xl items-center ${images.length === 0 ? 'bg-slate-300' : 'bg-green-600'
+                    className={`p-4 rounded-2xl items-center ${images.length === 0
+                        ? (isDark ? 'bg-slate-700' : 'bg-slate-300')
+                        : 'bg-green-600'
                         }`}
+                    style={images.length > 0 ? { shadowColor: '#22c55e', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 8 } : {}}
                 >
-                    <Text className="text-white font-bold text-lg">Convert to PDF</Text>
+                    <Text className={`font-bold text-lg ${images.length === 0 ? (isDark ? 'text-slate-400' : 'text-slate-500') : 'text-white'}`}>
+                        Convert to PDF
+                    </Text>
                 </TouchableOpacity>
             </View>
         </View>
     );
 }
+
