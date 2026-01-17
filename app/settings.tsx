@@ -1,9 +1,11 @@
-import { View, Text, TouchableOpacity, ScrollView, Alert, useColorScheme, Linking } from 'react-native';
+import { View, Text, ScrollView, Alert, useColorScheme, Linking } from 'react-native';
 import { Stack, router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import * as FileSystem from 'expo-file-system/legacy';
 import { useState, useEffect } from 'react';
+import { AnimatedPressable, FadeInView } from '../components/common';
 
 interface SettingItemProps {
     title: string;
@@ -12,43 +14,55 @@ interface SettingItemProps {
     onPress?: () => void;
     showArrow?: boolean;
     isDark: boolean;
-    danger?: boolean;
+    delay?: number;
 }
 
-function SettingItem({ title, subtitle, icon, onPress, showArrow = true, isDark, danger = false }: SettingItemProps) {
+function SettingItem({ title, subtitle, icon, onPress, showArrow = true, isDark, delay = 0 }: SettingItemProps) {
     return (
-        <TouchableOpacity
-            onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                onPress?.();
-            }}
-            disabled={!onPress}
-            className={`flex-row items-center p-4 rounded-2xl mb-2 ${isDark ? 'bg-slate-800/80' : 'bg-white'}`}
-            style={{
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 1 },
-                shadowOpacity: 0.05,
-                shadowRadius: 4,
-                elevation: 1,
-            }}
-        >
-            <View className={`w-10 h-10 rounded-xl items-center justify-center ${isDark ? 'bg-slate-700' : 'bg-slate-100'}`}>
-                <Text className="text-lg">{icon}</Text>
-            </View>
-            <View className="flex-1 ml-3">
-                <Text className={`font-medium ${danger ? 'text-red-500' : (isDark ? 'text-white' : 'text-slate-800')}`}>
-                    {title}
-                </Text>
-                {subtitle && (
-                    <Text className={`text-sm mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                        {subtitle}
+        <FadeInView delay={delay}>
+            <AnimatedPressable
+                onPress={onPress}
+                disabled={!onPress}
+                scaleValue={0.98}
+                style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    padding: 16,
+                    borderRadius: 16,
+                    marginBottom: 8,
+                    backgroundColor: isDark ? 'rgba(30, 41, 59, 0.8)' : '#fff',
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 1 },
+                    shadowOpacity: 0.05,
+                    shadowRadius: 4,
+                    elevation: 1,
+                }}
+            >
+                <View style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 12,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: isDark ? 'rgba(51, 65, 85, 0.5)' : '#f1f5f9',
+                }}>
+                    <Text style={{ fontSize: 18 }}>{icon}</Text>
+                </View>
+                <View style={{ flex: 1, marginLeft: 12 }}>
+                    <Text style={{ fontWeight: '500', color: isDark ? '#fff' : '#1e293b' }}>
+                        {title}
                     </Text>
+                    {subtitle && (
+                        <Text style={{ fontSize: 13, marginTop: 2, color: isDark ? '#64748b' : '#64748b' }}>
+                            {subtitle}
+                        </Text>
+                    )}
+                </View>
+                {showArrow && onPress && (
+                    <Text style={{ color: isDark ? '#475569' : '#cbd5e1', fontSize: 18 }}>›</Text>
                 )}
-            </View>
-            {showArrow && onPress && (
-                <Text className={isDark ? 'text-slate-500' : 'text-slate-300'}>›</Text>
-            )}
-        </TouchableOpacity>
+            </AnimatedPressable>
+        </FadeInView>
     );
 }
 
@@ -103,7 +117,7 @@ export default function SettingsScreen() {
     };
 
     return (
-        <View className={`flex-1 ${isDark ? 'bg-slate-950' : 'bg-slate-50'}`}>
+        <View style={{ flex: 1, backgroundColor: isDark ? '#020617' : '#f8fafc' }}>
             <Stack.Screen
                 options={{
                     title: '',
@@ -118,67 +132,101 @@ export default function SettingsScreen() {
                 colors={isDark ? ['#1e1b4b', '#0f172a'] : ['#6366f1', '#8b5cf6']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
-                className="pt-24 pb-8 px-6"
-                style={{ borderBottomLeftRadius: 32, borderBottomRightRadius: 32 }}
+                style={{
+                    paddingTop: 100,
+                    paddingBottom: 32,
+                    paddingHorizontal: 24,
+                    borderBottomLeftRadius: 32,
+                    borderBottomRightRadius: 32,
+                }}
             >
-                <Text className="text-white text-2xl font-bold">Settings</Text>
-                <Text className="text-white/60 text-sm mt-1">
-                    Customize your experience
-                </Text>
+                <Animated.View entering={FadeInDown.delay(100).springify()}>
+                    <Text style={{ color: '#fff', fontSize: 28, fontWeight: 'bold' }}>Settings</Text>
+                    <Text style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14, marginTop: 4 }}>
+                        Customize your experience
+                    </Text>
+                </Animated.View>
             </LinearGradient>
 
             <ScrollView
-                className="flex-1 px-4"
+                style={{ flex: 1, paddingHorizontal: 16 }}
                 contentContainerStyle={{ paddingTop: 20, paddingBottom: 100 }}
                 showsVerticalScrollIndicator={false}
             >
                 {/* Storage Section */}
-                <Text className={`text-xs font-semibold tracking-wider mb-3 ml-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                    STORAGE
-                </Text>
+                <FadeInView delay={150}>
+                    <Text style={{
+                        fontSize: 12,
+                        fontWeight: '600',
+                        letterSpacing: 1,
+                        marginBottom: 12,
+                        marginLeft: 4,
+                        color: isDark ? '#64748b' : '#64748b',
+                    }}>
+                        STORAGE
+                    </Text>
+                </FadeInView>
                 <SettingItem
                     icon="🗑️"
                     title="Clear Cache"
                     subtitle={`Current usage: ${cacheSize}`}
                     onPress={clearCache}
                     isDark={isDark}
+                    delay={200}
                 />
 
                 {/* About Section */}
-                <Text className={`text-xs font-semibold tracking-wider mb-3 ml-1 mt-6 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                    ABOUT
-                </Text>
-                <SettingItem
-                    icon="📱"
-                    title="Version"
-                    subtitle="1.1.0"
-                    showArrow={false}
-                    isDark={isDark}
-                />
+                <FadeInView delay={250}>
+                    <Text style={{
+                        fontSize: 12,
+                        fontWeight: '600',
+                        letterSpacing: 1,
+                        marginBottom: 12,
+                        marginLeft: 4,
+                        marginTop: 16,
+                        color: isDark ? '#64748b' : '#64748b',
+                    }}>
+                        ABOUT
+                    </Text>
+                </FadeInView>
+                <SettingItem icon="📱" title="Version" subtitle="1.1.0" showArrow={false} isDark={isDark} delay={300} />
                 <SettingItem
                     icon="💻"
                     title="Source Code"
                     subtitle="View on GitHub"
                     onPress={() => Linking.openURL('https://github.com/revanthsaii/PDF-Mantra')}
                     isDark={isDark}
+                    delay={350}
                 />
                 <SettingItem
                     icon="⭐"
                     title="Rate This App"
                     onPress={() => Alert.alert('Coming Soon', 'App store rating will be available after release')}
                     isDark={isDark}
+                    delay={400}
                 />
 
                 {/* Legal Section */}
-                <Text className={`text-xs font-semibold tracking-wider mb-3 ml-1 mt-6 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                    LEGAL
-                </Text>
+                <FadeInView delay={450}>
+                    <Text style={{
+                        fontSize: 12,
+                        fontWeight: '600',
+                        letterSpacing: 1,
+                        marginBottom: 12,
+                        marginLeft: 4,
+                        marginTop: 16,
+                        color: isDark ? '#64748b' : '#64748b',
+                    }}>
+                        LEGAL
+                    </Text>
+                </FadeInView>
                 <SettingItem
                     icon="📜"
                     title="License"
                     subtitle="MIT License"
                     onPress={() => Alert.alert('MIT License', 'PDF Mantra is open source software licensed under the MIT License.')}
                     isDark={isDark}
+                    delay={500}
                 />
                 <SettingItem
                     icon="🔒"
@@ -186,32 +234,49 @@ export default function SettingsScreen() {
                     subtitle="100% Offline - No data collected"
                     onPress={() => Alert.alert('Privacy', 'All files are processed locally. We never collect or transmit your data.')}
                     isDark={isDark}
+                    delay={550}
                 />
 
                 {/* Developer Card */}
-                <View
-                    className={`mt-8 p-5 rounded-3xl items-center ${isDark ? 'bg-slate-900' : 'bg-white'}`}
-                    style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 3 }}
-                >
-                    <Text className="text-3xl mb-2">🧘</Text>
-                    <Text className={`font-bold text-lg ${isDark ? 'text-white' : 'text-slate-800'}`}>
-                        PDF Mantra
-                    </Text>
-                    <Text className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                        Made with ❤️ by Aetherium Labs
-                    </Text>
-                </View>
+                <FadeInView delay={600}>
+                    <View style={{
+                        marginTop: 24,
+                        padding: 20,
+                        borderRadius: 24,
+                        alignItems: 'center',
+                        backgroundColor: isDark ? 'rgba(30, 41, 59, 0.8)' : '#fff',
+                        shadowColor: '#000',
+                        shadowOffset: { width: 0, height: 2 },
+                        shadowOpacity: 0.05,
+                        shadowRadius: 10,
+                        elevation: 3,
+                    }}>
+                        <Text style={{ fontSize: 36, marginBottom: 8 }}>🧘</Text>
+                        <Text style={{ fontWeight: 'bold', fontSize: 18, color: isDark ? '#fff' : '#1e293b' }}>
+                            PDF Mantra
+                        </Text>
+                        <Text style={{ fontSize: 14, color: isDark ? '#64748b' : '#64748b' }}>
+                            Made with ❤️ by Revanth Sai
+                        </Text>
+                    </View>
+                </FadeInView>
             </ScrollView>
 
             {/* Floating Back Button */}
-            <View className="absolute bottom-0 left-0 right-0 p-4">
-                <TouchableOpacity
+            <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: 16 }}>
+                <AnimatedPressable
                     onPress={() => {
                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                         router.back();
                     }}
-                    className={`p-4 rounded-2xl flex-row items-center justify-center ${isDark ? 'bg-slate-800' : 'bg-white'}`}
+                    scaleValue={0.98}
                     style={{
+                        padding: 16,
+                        borderRadius: 16,
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: isDark ? '#1e293b' : '#fff',
                         shadowColor: '#000',
                         shadowOffset: { width: 0, height: -2 },
                         shadowOpacity: 0.1,
@@ -219,10 +284,10 @@ export default function SettingsScreen() {
                         elevation: 10,
                     }}
                 >
-                    <Text className={`font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                    <Text style={{ fontWeight: '600', color: isDark ? '#fff' : '#334155' }}>
                         ← Back to Home
                     </Text>
-                </TouchableOpacity>
+                </AnimatedPressable>
             </View>
         </View>
     );
