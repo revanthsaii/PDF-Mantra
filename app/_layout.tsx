@@ -1,13 +1,16 @@
 import { Stack } from 'expo-router';
-import { useColorScheme } from 'react-native';
+import { View, useColorScheme } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 
 export default function Layout() {
     const colorScheme = useColorScheme();
     const isDark = colorScheme === 'dark';
 
+    // Use the exact background colors that match the screens
+    const backgroundColor = isDark ? '#020617' : '#f8fafc';
+
     return (
-        <>
+        <View style={{ flex: 1, backgroundColor }}>
             <StatusBar style={isDark ? 'light' : 'dark'} />
             <Stack
                 screenOptions={{
@@ -20,7 +23,7 @@ export default function Layout() {
                         fontWeight: '600',
                     },
                     contentStyle: {
-                        backgroundColor: isDark ? '#0f172a' : '#ffffff',
+                        backgroundColor: backgroundColor,
                     },
                     // iOS-like smooth animations
                     animation: 'slide_from_right',
@@ -28,8 +31,9 @@ export default function Layout() {
                     gestureEnabled: true,
                     gestureDirection: 'horizontal',
                     fullScreenGestureEnabled: true,
+                    presentation: 'card',
                 }}
             />
-        </>
+        </View>
     );
 }

@@ -99,7 +99,8 @@ export default function Home() {
         { title: 'Compress', icon: '📦', route: '/compress', gradient: ['#22c55e', '#4ade80'] as const },
         { title: 'Protect', icon: '🔐', route: '/protect', gradient: ['#ef4444', '#f87171'] as const },
         { title: 'Watermark', icon: '💧', route: '/watermark', gradient: ['#06b6d4', '#22d3ee'] as const },
-        { title: 'Extract', icon: '📄', route: '/extract-text', gradient: ['#6366f1', '#818cf8'] as const },
+        { title: 'Extract Text', icon: '📄', route: '/extract-text', gradient: ['#6366f1', '#818cf8'] as const },
+        { title: 'Extract Images', icon: '🖼️', route: '/extract-images', gradient: ['#f43f5e', '#fb7185'] as const },
     ];
 
     return (
