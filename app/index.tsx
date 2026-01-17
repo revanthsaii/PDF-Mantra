@@ -1,9 +1,11 @@
-import { View, Text, TouchableOpacity, Alert, ScrollView, useColorScheme, Dimensions } from 'react-native';
+import { View, Text, Alert, ScrollView, useColorScheme, Dimensions } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as DocumentPicker from 'expo-document-picker';
 import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
+import { AnimatedPressable, FadeInView, ScaleInView } from '../components/common';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = (width - 48) / 3;
@@ -14,25 +16,21 @@ interface ToolCardProps {
     onPress: () => void;
     gradient: readonly [string, string];
     isDark: boolean;
+    index: number;
 }
 
-function ToolCard({ title, icon, onPress, gradient, isDark }: ToolCardProps) {
+function ToolCard({ title, icon, onPress, gradient, isDark, index }: ToolCardProps) {
     return (
-        <TouchableOpacity
-            onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                onPress();
-            }}
-            activeOpacity={0.7}
-            style={{
-                width: CARD_WIDTH,
-                aspectRatio: 1,
-                marginBottom: 12,
-            }}
-        >
-            <View
-                className={`flex-1 rounded-2xl items-center justify-center ${isDark ? 'bg-slate-800/80' : 'bg-white'}`}
+        <ScaleInView delay={index * 60} style={{ width: CARD_WIDTH, aspectRatio: 1, marginBottom: 12 }}>
+            <AnimatedPressable
+                onPress={onPress}
+                scaleValue={0.95}
                 style={{
+                    flex: 1,
+                    borderRadius: 20,
+                    backgroundColor: isDark ? 'rgba(30, 41, 59, 0.8)' : '#ffffff',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                     shadowColor: isDark ? '#000' : gradient[0],
                     shadowOffset: { width: 0, height: 4 },
                     shadowOpacity: isDark ? 0.3 : 0.15,
@@ -41,19 +39,32 @@ function ToolCard({ title, icon, onPress, gradient, isDark }: ToolCardProps) {
                 }}
             >
                 <View
-                    className="w-12 h-12 rounded-xl items-center justify-center mb-2"
-                    style={{ backgroundColor: gradient[0] + '20' }}
+                    style={{
+                        width: 48,
+                        height: 48,
+                        borderRadius: 14,
+                        backgroundColor: gradient[0] + '20',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        marginBottom: 8,
+                    }}
                 >
-                    <Text className="text-2xl">{icon}</Text>
+                    <Text style={{ fontSize: 24 }}>{icon}</Text>
                 </View>
                 <Text
-                    className={`text-xs font-medium text-center px-1 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}
+                    style={{
+                        fontSize: 12,
+                        fontWeight: '500',
+                        textAlign: 'center',
+                        color: isDark ? '#cbd5e1' : '#334155',
+                        paddingHorizontal: 4,
+                    }}
                     numberOfLines={1}
                 >
                     {title}
                 </Text>
-            </View>
-        </TouchableOpacity>
+            </AnimatedPressable>
+        </ScaleInView>
     );
 }
 
@@ -92,7 +103,7 @@ export default function Home() {
     ];
 
     return (
-        <View className={`flex-1 ${isDark ? 'bg-slate-950' : 'bg-slate-50'}`}>
+        <View style={{ flex: 1, backgroundColor: isDark ? '#020617' : '#f8fafc' }}>
             <StatusBar style={isDark ? 'light' : 'dark'} />
 
             {/* Premium Gradient Header */}
@@ -100,54 +111,75 @@ export default function Home() {
                 colors={isDark ? ['#1e1b4b', '#0f172a'] : ['#6366f1', '#8b5cf6']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
-                className="pt-16 pb-8 px-6"
                 style={{
+                    paddingTop: 60,
+                    paddingBottom: 32,
+                    paddingHorizontal: 24,
                     borderBottomLeftRadius: 32,
                     borderBottomRightRadius: 32,
                 }}
             >
-                <View className="items-center">
-                    <Text className="text-4xl mb-2">🧘</Text>
-                    <Text className="text-white text-3xl font-bold tracking-tight">
+                <Animated.View entering={FadeInDown.delay(100).springify()} style={{ alignItems: 'center' }}>
+                    <Text style={{ fontSize: 40, marginBottom: 8 }}>🧘</Text>
+                    <Text style={{ color: '#fff', fontSize: 32, fontWeight: 'bold', letterSpacing: -0.5 }}>
                         PDF Mantra
                     </Text>
-                    <Text className="text-white/70 text-sm mt-1">
+                    <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 14, marginTop: 4 }}>
                         Your Privacy-First PDF Toolkit
                     </Text>
-                </View>
+                </Animated.View>
 
                 {/* Open PDF Button */}
-                <TouchableOpacity
-                    onPress={pickDocument}
-                    activeOpacity={0.9}
-                    className="mt-6 bg-white/20 backdrop-blur-lg rounded-2xl p-4 flex-row items-center justify-center"
-                    style={{
-                        borderWidth: 1,
-                        borderColor: 'rgba(255,255,255,0.3)',
-                    }}
-                >
-                    <Text className="text-white text-lg font-semibold">
-                        📖  Open PDF File
-                    </Text>
-                </TouchableOpacity>
+                <Animated.View entering={FadeInUp.delay(200).springify()}>
+                    <AnimatedPressable
+                        onPress={pickDocument}
+                        scaleValue={0.98}
+                        style={{
+                            marginTop: 24,
+                            backgroundColor: 'rgba(255,255,255,0.2)',
+                            borderRadius: 16,
+                            padding: 16,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            borderWidth: 1,
+                            borderColor: 'rgba(255,255,255,0.3)',
+                        }}
+                    >
+                        <Text style={{ color: '#fff', fontSize: 17, fontWeight: '600' }}>
+                            📖  Open PDF File
+                        </Text>
+                    </AnimatedPressable>
+                </Animated.View>
             </LinearGradient>
 
             <ScrollView
-                className="flex-1"
+                style={{ flex: 1 }}
                 contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
                 showsVerticalScrollIndicator={false}
             >
                 {/* Tools Section */}
-                <View className="flex-row items-center justify-between mb-4 mt-2">
-                    <Text className={`text-sm font-semibold tracking-wider ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                        TOOLS
-                    </Text>
-                    <View className={`h-px flex-1 ml-4 ${isDark ? 'bg-slate-800' : 'bg-slate-200'}`} />
-                </View>
+                <FadeInView delay={300}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16, marginTop: 8 }}>
+                        <Text style={{
+                            fontSize: 13,
+                            fontWeight: '600',
+                            letterSpacing: 1,
+                            color: isDark ? '#64748b' : '#64748b',
+                        }}>
+                            TOOLS
+                        </Text>
+                        <View style={{
+                            height: 1,
+                            flex: 1,
+                            marginLeft: 12,
+                            backgroundColor: isDark ? '#1e293b' : '#e2e8f0',
+                        }} />
+                    </View>
+                </FadeInView>
 
                 {/* Tools Grid */}
-                <View className="flex-row flex-wrap justify-between">
-                    {tools.map((tool) => (
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
+                    {tools.map((tool, index) => (
                         <ToolCard
                             key={tool.route}
                             title={tool.title}
@@ -155,26 +187,43 @@ export default function Home() {
                             onPress={() => router.push(tool.route as any)}
                             gradient={tool.gradient}
                             isDark={isDark}
+                            index={index}
                         />
                     ))}
                 </View>
 
                 {/* Quick Access */}
-                <View className="flex-row items-center justify-between mb-4 mt-4">
-                    <Text className={`text-sm font-semibold tracking-wider ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                        QUICK ACCESS
-                    </Text>
-                    <View className={`h-px flex-1 ml-4 ${isDark ? 'bg-slate-800' : 'bg-slate-200'}`} />
-                </View>
+                <FadeInView delay={600}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16, marginTop: 16 }}>
+                        <Text style={{
+                            fontSize: 13,
+                            fontWeight: '600',
+                            letterSpacing: 1,
+                            color: isDark ? '#64748b' : '#64748b',
+                        }}>
+                            QUICK ACCESS
+                        </Text>
+                        <View style={{
+                            height: 1,
+                            flex: 1,
+                            marginLeft: 12,
+                            backgroundColor: isDark ? '#1e293b' : '#e2e8f0',
+                        }} />
+                    </View>
+                </FadeInView>
 
-                <View className="flex-row gap-3">
-                    <TouchableOpacity
-                        onPress={() => {
-                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                            router.push('/about');
-                        }}
-                        className={`flex-1 p-4 rounded-2xl flex-row items-center justify-center ${isDark ? 'bg-slate-800/80' : 'bg-white'}`}
+                <FadeInView delay={700} style={{ flexDirection: 'row', gap: 12 }}>
+                    <AnimatedPressable
+                        onPress={() => router.push('/about')}
+                        scaleValue={0.97}
                         style={{
+                            flex: 1,
+                            padding: 16,
+                            borderRadius: 16,
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            backgroundColor: isDark ? 'rgba(30, 41, 59, 0.8)' : '#ffffff',
                             shadowColor: '#000',
                             shadowOffset: { width: 0, height: 2 },
                             shadowOpacity: 0.05,
@@ -182,19 +231,23 @@ export default function Home() {
                             elevation: 2,
                         }}
                     >
-                        <Text className="text-lg mr-2">ℹ️</Text>
-                        <Text className={`font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                        <Text style={{ fontSize: 18, marginRight: 8 }}>ℹ️</Text>
+                        <Text style={{ fontWeight: '500', color: isDark ? '#cbd5e1' : '#334155' }}>
                             About
                         </Text>
-                    </TouchableOpacity>
+                    </AnimatedPressable>
 
-                    <TouchableOpacity
-                        onPress={() => {
-                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                            router.push('/settings');
-                        }}
-                        className={`flex-1 p-4 rounded-2xl flex-row items-center justify-center ${isDark ? 'bg-slate-800/80' : 'bg-white'}`}
+                    <AnimatedPressable
+                        onPress={() => router.push('/settings')}
+                        scaleValue={0.97}
                         style={{
+                            flex: 1,
+                            padding: 16,
+                            borderRadius: 16,
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            backgroundColor: isDark ? 'rgba(30, 41, 59, 0.8)' : '#ffffff',
                             shadowColor: '#000',
                             shadowOffset: { width: 0, height: 2 },
                             shadowOpacity: 0.05,
@@ -202,22 +255,28 @@ export default function Home() {
                             elevation: 2,
                         }}
                     >
-                        <Text className="text-lg mr-2">⚙️</Text>
-                        <Text className={`font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                        <Text style={{ fontSize: 18, marginRight: 8 }}>⚙️</Text>
+                        <Text style={{ fontWeight: '500', color: isDark ? '#cbd5e1' : '#334155' }}>
                             Settings
                         </Text>
-                    </TouchableOpacity>
-                </View>
+                    </AnimatedPressable>
+                </FadeInView>
 
                 {/* Footer */}
-                <View className="mt-8 items-center">
-                    <View className="flex-row items-center gap-2">
-                        <View className={`w-2 h-2 rounded-full ${isDark ? 'bg-emerald-400' : 'bg-emerald-500'}`} />
-                        <Text className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                <FadeInView delay={800} style={{ marginTop: 32, alignItems: 'center' }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <View style={{
+                            width: 8,
+                            height: 8,
+                            borderRadius: 4,
+                            backgroundColor: isDark ? '#34d399' : '#10b981',
+                            marginRight: 8,
+                        }} />
+                        <Text style={{ fontSize: 12, color: isDark ? '#475569' : '#94a3b8' }}>
                             100% Offline • Privacy First
                         </Text>
                     </View>
-                </View>
+                </FadeInView>
             </ScrollView>
         </View>
     );

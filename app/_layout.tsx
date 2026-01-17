@@ -1,6 +1,7 @@
 import { Stack } from 'expo-router';
 import { useColorScheme } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import '../global.css';
 
 export default function Layout() {
     const colorScheme = useColorScheme();
@@ -22,7 +23,12 @@ export default function Layout() {
                     contentStyle: {
                         backgroundColor: isDark ? '#0f172a' : '#ffffff',
                     },
+                    // iOS-like smooth animations
                     animation: 'slide_from_right',
+                    animationDuration: 350,
+                    gestureEnabled: true,
+                    gestureDirection: 'horizontal',
+                    fullScreenGestureEnabled: true,
                 }}
             />
         </>
