@@ -84,6 +84,7 @@ export default function Home() {
         { title: 'Images to PDF', emoji: '🖼️', route: '/image-to-pdf', colors: { bgLight: 'bg-pink-50', bgDark: 'bg-pink-900/30', textLight: 'text-pink-700', textDark: 'text-pink-300', borderLight: 'border-pink-200', borderDark: 'border-pink-800' } },
         { title: 'Compress', emoji: '📦', route: '/compress', colors: { bgLight: 'bg-green-50', bgDark: 'bg-green-900/30', textLight: 'text-green-700', textDark: 'text-green-300', borderLight: 'border-green-200', borderDark: 'border-green-800' } },
         { title: 'Protect', emoji: '🔒', route: '/protect', colors: { bgLight: 'bg-red-50', bgDark: 'bg-red-900/30', textLight: 'text-red-700', textDark: 'text-red-300', borderLight: 'border-red-200', borderDark: 'border-red-800' } },
+        { title: 'Watermark', emoji: '💧', route: '/watermark', colors: { bgLight: 'bg-cyan-50', bgDark: 'bg-cyan-900/30', textLight: 'text-cyan-700', textDark: 'text-cyan-300', borderLight: 'border-cyan-200', borderDark: 'border-cyan-800' } },
         { title: 'Extract Text', emoji: '📝', route: '/extract-text', colors: { bgLight: 'bg-indigo-50', bgDark: 'bg-indigo-900/30', textLight: 'text-indigo-700', textDark: 'text-indigo-300', borderLight: 'border-indigo-200', borderDark: 'border-indigo-800' } },
     ];
 
@@ -140,17 +141,30 @@ export default function Home() {
 
                 {/* Footer */}
                 <View className="mt-8 items-center gap-3">
-                    <TouchableOpacity
-                        onPress={() => {
-                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                            router.push('/about');
-                        }}
-                        className={`px-6 py-2 rounded-full ${isDark ? 'bg-slate-800' : 'bg-slate-100'}`}
-                    >
-                        <Text className={`font-semibold ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
-                            ℹ️ About PDF Mantra
-                        </Text>
-                    </TouchableOpacity>
+                    <View className="flex-row gap-3">
+                        <TouchableOpacity
+                            onPress={() => {
+                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                router.push('/about');
+                            }}
+                            className={`px-5 py-2 rounded-full ${isDark ? 'bg-slate-800' : 'bg-slate-100'}`}
+                        >
+                            <Text className={`font-semibold ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+                                ℹ️ About
+                            </Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            onPress={() => {
+                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                router.push('/settings');
+                            }}
+                            className={`px-5 py-2 rounded-full ${isDark ? 'bg-slate-800' : 'bg-slate-100'}`}
+                        >
+                            <Text className={`font-semibold ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+                                ⚙️ Settings
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
                     <Text className={`text-xs ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>
                         100% Offline • Open Source • Privacy First
                     </Text>
