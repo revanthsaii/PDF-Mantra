@@ -6,6 +6,7 @@ import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { AnimatedPressable, FadeInView, ScaleInView } from '../components/common';
+import { useRecentFiles } from '../hooks';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = (width - 48) / 3;
@@ -72,20 +73,23 @@ export default function Home() {
     const colorScheme = useColorScheme();
     const isDark = colorScheme === 'dark';
 
+    const { recentFiles, addRecentFile, clearRecentFiles } = useRecentFiles();
+
     const pickDocument = async () => {
         try {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             const result = await DocumentPicker.getDocumentAsync({
                 type: 'application/pdf',
                 copyToCacheDirectory: true,
             });
 
-            if (result.canceled) return;
-
-            const { uri, name } = result.assets[0];
-            router.push({ pathname: '/viewer', params: { uri, name } });
+            if (result.assets && result.assets[0]) {
+                const file = result.assets[0];
+                addRecentFile({ name: file.name, uri: file.uri, size: file.size });
+                router.push({ pathname: '/viewer', params: { uri: file.uri } });
+            }
         } catch (err) {
-            console.error(err);
+            console.log('Error picking document:', err);
             Alert.alert('Error', 'Failed to pick document');
         }
     };
@@ -265,8 +269,79 @@ export default function Home() {
                     </AnimatedPressable>
                 </FadeInView>
 
+                {/* ... existing Quick Access ... */}
+
+                {/* Recent Files Section */}
+                {recentFiles.length > 0 && (
+                    <FadeInView delay={800} style={{ marginTop: 24 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+                            <Text style={{
+                                fontSize: 13,
+                                fontWeight: '600',
+                                letterSpacing: 1,
+                                color: isDark ? '#64748b' : '#64748b',
+                            }}>
+                                RECENT FILES
+                            </Text>
+                            <View style={{
+                                height: 1,
+                                flex: 1,
+                                marginLeft: 12,
+                                backgroundColor: isDark ? '#1e293b' : '#e2e8f0',
+                            }} />
+                            {recentFiles.length > 0 && (
+                                <AnimatedPressable onPress={clearRecentFiles} scaleValue={0.9}>
+                                    <Text style={{ fontSize: 12, color: isDark ? '#ef4444' : '#f87171', marginLeft: 8 }}>Clear</Text>
+                                </AnimatedPressable>
+                            )}
+                        </View>
+
+                        {recentFiles.map((file: any, i: number) => (
+                            <AnimatedPressable
+                                key={file.id}
+                                onPress={() => {
+                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                    // Re-add to move to top
+                                    addRecentFile({ name: file.name, uri: file.uri, size: file.size });
+                                    router.push({ pathname: '/viewer', params: { uri: file.uri } });
+                                }}
+                                scaleValue={0.98}
+                                style={{
+                                    flexDirection: 'row',
+                                    alignItems: 'center',
+                                    padding: 12,
+                                    borderRadius: 12,
+                                    marginBottom: 8,
+                                    backgroundColor: isDark ? 'rgba(30, 41, 59, 0.5)' : '#fff',
+                                    borderWidth: 1,
+                                    borderColor: isDark ? '#334155' : '#e2e8f0',
+                                }}
+                            >
+                                <View style={{
+                                    width: 40, height: 40,
+                                    borderRadius: 10,
+                                    backgroundColor: isDark ? '#1e293b' : '#f1f5f9',
+                                    alignItems: 'center', justifyContent: 'center',
+                                    marginRight: 12
+                                }}>
+                                    <Text style={{ fontSize: 20 }}>📄</Text>
+                                </View>
+                                <View style={{ flex: 1 }}>
+                                    <Text style={{ color: isDark ? '#fff' : '#1e293b', fontWeight: '500' }} numberOfLines={1}>
+                                        {file.name}
+                                    </Text>
+                                    <Text style={{ color: isDark ? '#64748b' : '#94a3b8', fontSize: 11 }}>
+                                        {new Date(file.timestamp).toLocaleDateString()}
+                                    </Text>
+                                </View>
+                                <Text style={{ color: isDark ? '#475569' : '#cbd5e1', fontSize: 18 }}>›</Text>
+                            </AnimatedPressable>
+                        ))}
+                    </FadeInView>
+                )}
+
                 {/* Footer */}
-                <FadeInView delay={800} style={{ marginTop: 32, alignItems: 'center' }}>
+                <FadeInView delay={900} style={{ marginTop: 32, alignItems: 'center' }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                         <View style={{
                             width: 8,
