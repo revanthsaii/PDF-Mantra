@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main, develop]
 
+# Minimal required permissions — principle of least privilege
+permissions:
+  contents: read
+
 jobs:
   lint-and-typecheck:
     name: Lint & Type Check
@@ -24,8 +28,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Audit for known CVEs in dependencies — fails on high/critical
+      - name: Security audit
+        run: npm audit --audit-level=high
+
+      # TypeScript strict check — noEmit so no JS is emitted
       - name: TypeScript type check
         run: npx tsc --noEmit
 
+      # expo-doctor — fail fast on real issues, no silence
       - name: Check for Expo Doctor issues
-        run: npx expo-doctor@latest || true
+        run: npx expo-doctor@latest
+        continue-on-error: false
