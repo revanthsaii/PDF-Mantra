@@ -1,5 +1,5 @@
 import { useLocalSearchParams, Stack, router } from 'expo-router';
-import { View, ActivityIndicator, TouchableOpacity, Text, StyleSheet, Dimensions, Alert } from 'react-native';
+import { View, ActivityIndicator, TouchableOpacity, Text, StyleSheet, Dimensions, Alert, Platform } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { useState, useEffect } from 'react';
 import * as FileSystem from 'expo-file-system/legacy';
@@ -134,13 +134,15 @@ export default function Viewer() {
             )}
 
             <WebView
-                source={getWebViewContent()}
+                source={Platform.OS === 'ios' && uri ? { uri: uri as string } : getWebViewContent()}
                 style={styles.webview}
                 onLoadEnd={() => setLoading(false)}
                 onError={(e) => {
                     console.error('WebView error:', e.nativeEvent);
                     setError('Failed to display PDF');
                 }}
+                originWhitelist={['*']}
+                allowFileAccess={true}
                 scalesPageToFit={true}
                 javaScriptEnabled={true}
             />

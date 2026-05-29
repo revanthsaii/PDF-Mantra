@@ -1,6 +1,190 @@
-import { PDFDocument } from 'pdf-lib';
+import { PDFDocument, PDFName, PDFArray, PDFRawStream, decodePDFRawStream } from 'pdf-lib';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
+
+function parseContentStream(stream: string): string {
+    let result = '';
+    let i = 0;
+    while (i < stream.length) {
+        if (stream[i] === '(') {
+            let str = '';
+            i++;
+            let parenCount = 1;
+            while (i < stream.length && parenCount > 0) {
+                if (stream[i] === '\\') {
+                    i++;
+                    if (i < stream.length) {
+                        const char = stream[i];
+                        if (char === 'n') str += '\n';
+                        else if (char === 'r') str += '\r';
+                        else if (char === 't') str += '\t';
+                        else if (char === 'b') str += '\b';
+                        else if (char === 'f') str += '\f';
+                        else if (/[0-7]/.test(char)) {
+                            let octal = char;
+                            if (i + 1 < stream.length && /[0-7]/.test(stream[i + 1])) {
+                                i++;
+                                octal += stream[i];
+                                if (i + 1 < stream.length && /[0-7]/.test(stream[i + 1])) {
+                                    i++;
+                                    octal += stream[i];
+                                }
+                            }
+                            str += String.fromCharCode(parseInt(octal, 8));
+                        } else {
+                            str += char;
+                        }
+                    }
+                } else if (stream[i] === '(') {
+                    parenCount++;
+                    str += '(';
+                } else if (stream[i] === ')') {
+                    parenCount--;
+                    if (parenCount > 0) str += ')';
+                } else {
+                    str += stream[i];
+                }
+                i++;
+            }
+            
+            let j = i;
+            while (j < stream.length && /\s/.test(stream[j])) j++;
+            let nextChars = stream.substring(j, j + 5);
+            if (nextChars.startsWith('Tj') || nextChars.startsWith('\'') || nextChars.startsWith('"')) {
+                result += str;
+                if (nextChars.startsWith('\'') || nextChars.startsWith('"')) {
+                    result += '\n';
+                }
+            }
+        } else if (stream[i] === '<') {
+            let hex = '';
+            i++;
+            while (i < stream.length && stream[i] !== '>') {
+                if (/[0-9a-fA-F]/.test(stream[i])) {
+                    hex += stream[i];
+                }
+                i++;
+            }
+            let str = '';
+            for (let k = 0; k < hex.length; k += 2) {
+                const code = parseInt(hex.substring(k, k + 2), 16);
+                if (!isNaN(code)) {
+                    str += String.fromCharCode(code);
+                }
+            }
+            i++; // move past '>'
+            
+            let j = i;
+            while (j < stream.length && /\s/.test(stream[j])) j++;
+            let nextChars = stream.substring(j, j + 5);
+            if (nextChars.startsWith('Tj') || nextChars.startsWith('\'') || nextChars.startsWith('"')) {
+                result += str;
+                if (nextChars.startsWith('\'') || nextChars.startsWith('"')) {
+                    result += '\n';
+                }
+            }
+        } else if (stream[i] === '[') {
+            i++;
+            let tjText = '';
+            while (i < stream.length && stream[i] !== ']') {
+                if (stream[i] === '(') {
+                    let str = '';
+                    i++;
+                    let parenCount = 1;
+                    while (i < stream.length && parenCount > 0) {
+                        if (stream[i] === '\\') {
+                            i++;
+                            if (i < stream.length) {
+                                const char = stream[i];
+                                if (char === 'n') str += '\n';
+                                else if (char === 'r') str += '\r';
+                                else if (char === 't') str += '\t';
+                                else str += char;
+                            }
+                        } else if (stream[i] === '(') {
+                            parenCount++;
+                            str += '(';
+                        } else if (stream[i] === ')') {
+                            parenCount--;
+                            if (parenCount > 0) str += ')';
+                        } else {
+                            str += stream[i];
+                        }
+                        i++;
+                    }
+                    tjText += str;
+                } else if (stream[i] === '<') {
+                    let hex = '';
+                    i++;
+                    while (i < stream.length && stream[i] !== '>') {
+                        if (/[0-9a-fA-F]/.test(stream[i])) {
+                            hex += stream[i];
+                        }
+                        i++;
+                    }
+                    let str = '';
+                    for (let k = 0; k < hex.length; k += 2) {
+                        const code = parseInt(hex.substring(k, k + 2), 16);
+                        if (!isNaN(code)) {
+                            str += String.fromCharCode(code);
+                        }
+                    }
+                    tjText += str;
+                    i++; // move past '>'
+                } else {
+                    let numStr = '';
+                    while (i < stream.length && (/[0-9\.\-]/.test(stream[i]))) {
+                        numStr += stream[i];
+                        i++;
+                    }
+                    if (numStr) {
+                        const offset = parseFloat(numStr);
+                        if (offset <= -150) {
+                            tjText += ' ';
+                        }
+                    }
+                    i++;
+                }
+            }
+            let j = i + 1;
+            while (j < stream.length && /\s/.test(stream[j])) j++;
+            let nextChars = stream.substring(j, j + 5);
+            if (nextChars.startsWith('TJ')) {
+                result += tjText;
+            }
+        } else if (stream[i] === 'T' && stream[i + 1] === '*') {
+            result += '\n';
+            i += 2;
+        } else if (stream[i] === 'T' && (stream[i + 1] === 'd' || stream[i + 1] === 'D')) {
+            result += '\n';
+            i += 2;
+        } else {
+            i++;
+        }
+    }
+    return result;
+}
+
+function uint8ArrayToBase64(arr: Uint8Array): string {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+    let base64 = '';
+    const len = arr.length;
+    for (let i = 0; i < len; i += 3) {
+        const b1 = arr[i];
+        const b2 = i + 1 < len ? arr[i + 1] : NaN;
+        const b3 = i + 2 < len ? arr[i + 2] : NaN;
+        
+        const enc1 = b1 >> 2;
+        const enc2 = ((b1 & 3) << 4) | (isNaN(b2) ? 0 : (b2 >> 4));
+        const enc3 = isNaN(b2) ? 64 : (((b2 & 15) << 2) | (isNaN(b3) ? 0 : (b3 >> 6)));
+        const enc4 = isNaN(b3) ? 64 : (b3 & 63);
+        
+        base64 += chars.charAt(enc1) + chars.charAt(enc2) + 
+                  (enc3 === 64 ? '=' : chars.charAt(enc3)) + 
+                  (enc4 === 64 ? '=' : chars.charAt(enc4));
+    }
+    return base64;
+}
 
 export interface PDFMetadata {
     pageCount: number;
@@ -145,11 +329,97 @@ class PDFService {
      * Extract text from a PDF
      */
     async extractText(uri: string): Promise<string> {
-        // pdf-lib doesn't support text extraction directly
-        // This is a placeholder - actual text extraction would require additional libraries
-        const pdf = await this.loadPDF(uri, { ignoreEncryption: true });
-        const pageCount = pdf.getPageCount();
-        return `PDF has ${pageCount} pages. Full text extraction requires additional libraries.`;
+        try {
+            const pdf = await this.loadPDF(uri, { ignoreEncryption: true });
+            const pages = pdf.getPages();
+            const context = pdf.context;
+            let fullText = '';
+
+            for (let i = 0; i < pages.length; i++) {
+                const page = pages[i];
+                const contents = page.node.Contents();
+                if (!contents) continue;
+
+                let refs: any[] = [];
+                if ((contents as any).array) {
+                    refs = (contents as any).array;
+                } else {
+                    refs = [contents];
+                }
+
+                let pageText = '';
+                for (const ref of refs) {
+                    const streamObj = context.lookup(ref);
+                    if (streamObj instanceof PDFRawStream) {
+                        const decodedBytes = decodePDFRawStream(streamObj).decode();
+                        
+                        let streamStr = '';
+                        for (let k = 0; k < decodedBytes.length; k++) {
+                            streamStr += String.fromCharCode(decodedBytes[k]);
+                        }
+                        
+                        pageText += parseContentStream(streamStr);
+                    }
+                }
+                
+                if (pageText.trim()) {
+                    fullText += `--- Page ${i + 1} ---\n${pageText}\n\n`;
+                }
+            }
+            
+            return fullText || 'No extractable text found in this PDF.';
+        } catch (error) {
+            console.error('Text extraction failed:', error);
+            throw new Error('Failed to extract text from PDF.');
+        }
+    }
+
+    /**
+     * Extract JPEG images from a PDF
+     */
+    async extractImages(uri: string): Promise<string[]> {
+        try {
+            const base64 = await FileSystem.readAsStringAsync(uri, {
+                encoding: FileSystem.EncodingType.Base64,
+            });
+            const pdfDoc = await PDFDocument.load(base64, { ignoreEncryption: true });
+            const enumeratedObjects = pdfDoc.context.enumerateIndirectObjects();
+            const extractedUris: string[] = [];
+            
+            let imgIndex = 0;
+            for (const [ref, pdfObject] of enumeratedObjects) {
+                if (!(pdfObject instanceof PDFRawStream)) continue;
+                
+                const subtype = pdfObject.dict.get(PDFName.of('Subtype'));
+                if (subtype === PDFName.of('Image')) {
+                    const filter = pdfObject.dict.get(PDFName.of('Filter'));
+                    
+                    let isJpeg = false;
+                    if (filter === PDFName.of('DCTDecode')) {
+                        isJpeg = true;
+                    } else if (filter instanceof PDFArray) {
+                        isJpeg = (filter as any).asArray().some((f: any) => f === PDFName.of('DCTDecode'));
+                    }
+                    
+                    if (isJpeg) {
+                        const decodedBytes = decodePDFRawStream(pdfObject).decode();
+                        const imgBase64 = uint8ArrayToBase64(decodedBytes);
+                        const filename = `extracted_img_${Date.now()}_${imgIndex + 1}.jpg`;
+                        const fileUri = FileSystem.documentDirectory + filename;
+                        
+                        await FileSystem.writeAsStringAsync(fileUri, imgBase64, {
+                            encoding: FileSystem.EncodingType.Base64,
+                        });
+                        extractedUris.push(fileUri);
+                        imgIndex++;
+                    }
+                }
+            }
+            return extractedUris;
+        } catch (error) {
+            console.error('Image extraction failed:', error);
+            throw new Error('Failed to extract images from PDF.');
+        }
     }
 
     /**

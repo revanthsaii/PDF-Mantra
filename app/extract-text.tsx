@@ -2,13 +2,13 @@ import { View, Text, TouchableOpacity, Alert, ActivityIndicator, ScrollView, use
 import { Stack, router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as DocumentPicker from 'expo-document-picker';
-import { PDFDocument } from 'pdf-lib';
 import * as FileSystem from 'expo-file-system/legacy';
 import { useState } from 'react';
 import * as Haptics from 'expo-haptics';
 import * as Clipboard from 'expo-clipboard';
 import * as Sharing from 'expo-sharing';
 import { AnimatedPressable, FadeInView } from '../components/common';
+import pdfService from '../modules/pdf/PDFService';
 
 export default function ExtractTextScreen() {
     const colorScheme = useColorScheme();
@@ -43,61 +43,16 @@ export default function ExtractTextScreen() {
         try {
             await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-            const fileContent = await FileSystem.readAsStringAsync(file.uri, {
-                encoding: 'base64'
-            });
+            const metadata = await pdfService.getMetadata(file.uri);
+            setPageCount(metadata.pageCount);
 
-            const pdfDoc = await PDFDocument.load(fileContent, { ignoreEncryption: true });
-            const pages = pdfDoc.getPageCount();
-            setPageCount(pages);
-
-            // Extract metadata and any available info
-            const title = pdfDoc.getTitle() || 'Untitled';
-            const author = pdfDoc.getAuthor() || 'Unknown';
-            const subject = pdfDoc.getSubject() || '';
-            const creator = pdfDoc.getCreator() || '';
-            const producer = pdfDoc.getProducer() || '';
-            const creationDate = pdfDoc.getCreationDate();
-            const modificationDate = pdfDoc.getModificationDate();
-
-            // Build extracted info text
-            let extractedInfo = `📄 PDF Document Analysis\n${'─'.repeat(30)}\n\n`;
-            extractedInfo += `📁 File: ${file.name}\n`;
-            extractedInfo += `📑 Pages: ${pages}\n\n`;
-
-            extractedInfo += `📋 METADATA\n${'─'.repeat(20)}\n`;
-            extractedInfo += `Title: ${title}\n`;
-            extractedInfo += `Author: ${author}\n`;
-            if (subject) extractedInfo += `Subject: ${subject}\n`;
-            if (creator) extractedInfo += `Creator: ${creator}\n`;
-            if (producer) extractedInfo += `Producer: ${producer}\n`;
-            if (creationDate) extractedInfo += `Created: ${creationDate.toLocaleDateString()}\n`;
-            if (modificationDate) extractedInfo += `Modified: ${modificationDate.toLocaleDateString()}\n`;
-
-            // Page dimensions
-            extractedInfo += `\n📐 PAGE DIMENSIONS\n${'─'.repeat(20)}\n`;
-            for (let i = 0; i < Math.min(pages, 5); i++) {
-                const page = pdfDoc.getPage(i);
-                const { width, height } = page.getSize();
-                extractedInfo += `Page ${i + 1}: ${Math.round(width)} × ${Math.round(height)} pts\n`;
-            }
-            if (pages > 5) {
-                extractedInfo += `... and ${pages - 5} more pages\n`;
-            }
-
-            // Note about OCR
-            extractedInfo += `\n💡 NOTE\n${'─'.repeat(20)}\n`;
-            extractedInfo += `This analysis shows PDF metadata and structure.\n\n`;
-            extractedInfo += `For full text extraction from scanned documents,\n`;
-            extractedInfo += `OCR (Optical Character Recognition) is required.\n\n`;
-            extractedInfo += `The extracted metadata can be copied or exported.`;
-
-            setExtractedText(extractedInfo);
+            const text = await pdfService.extractText(file.uri);
+            setExtractedText(text);
             await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
         } catch (error) {
             console.error(error);
-            Alert.alert('Error', 'Failed to analyze PDF');
+            Alert.alert('Error', 'Failed to extract text from PDF');
             await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         } finally {
             setLoading(false);
