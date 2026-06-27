@@ -85,12 +85,16 @@ jobs:
 
       # Build preview APK on every push to main
       - name: Build on EAS (push to main)
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.EXPO_TOKEN != ''
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: eas build --platform android --profile preview --non-interactive
 
       # Manual dispatch — honours platform + profile inputs
       - name: Build on EAS (manual dispatch)
-        if: github.event_name == 'workflow_dispatch'
+        if: github.event_name == 'workflow_dispatch' && secrets.EXPO_TOKEN != ''
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: eas build --platform ${{ github.event.inputs.platform }} --profile ${{ github.event.inputs.profile }} --non-interactive
 
   # ── Step 3: production submit only on version tag ─────────────────────────
@@ -117,4 +121,7 @@ jobs:
         run: npm ci
 
       - name: Submit to Google Play
+        if: secrets.EXPO_TOKEN != ''
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: eas submit --platform android --non-interactive
