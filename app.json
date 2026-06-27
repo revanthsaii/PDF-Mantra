@@ -33,7 +33,8 @@
         {
           "cameraPermission": "Allow PDF Mantra to use your camera to scan documents."
         }
-      ]
+      ],
+      "expo-router"
     ],
     "scheme": "pdfmantra"
   }
