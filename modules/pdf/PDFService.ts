@@ -142,8 +142,9 @@ function parseContentStream(stream: string): string {
                         if (offset <= -150) {
                             tjText += ' ';
                         }
+                    } else {
+                        i++;
                     }
-                    i++;
                 }
             }
             let j = i + 1;
@@ -392,17 +393,29 @@ class PDFService {
                 
                 const subtype = pdfObject.dict.get(PDFName.of('Subtype'));
                 if (subtype === PDFName.of('Image')) {
-                    const filter = pdfObject.dict.get(PDFName.of('Filter'));
+                    const filter = pdfObject.dict.lookup(PDFName.of('Filter'));
                     
                     let isJpeg = false;
                     if (filter === PDFName.of('DCTDecode')) {
                         isJpeg = true;
-                    } else if (filter instanceof PDFArray) {
-                        isJpeg = (filter as any).asArray().some((f: any) => f === PDFName.of('DCTDecode'));
+                    } else if (filter instanceof PDFArray && filter.size() > 0) {
+                        isJpeg = filter.lookup(filter.size() - 1) === PDFName.of('DCTDecode');
                     }
                     
                     if (isJpeg) {
-                        const decodedBytes = decodePDFRawStream(pdfObject).decode();
+                        // DCTDecode is the JPEG encoding itself. Decode only any
+                        // wrapping filters, preserving the JPEG bytes for export.
+                        const dict = pdfObject.dict.clone();
+                        if (filter instanceof PDFArray && filter.size() > 1) {
+                            const wrappers = filter.clone();
+                            wrappers.remove(wrappers.size() - 1);
+                            dict.set(PDFName.of('Filter'), wrappers);
+                        } else {
+                            dict.delete(PDFName.of('Filter'));
+                        }
+                        const decodedBytes = decodePDFRawStream(
+                            PDFRawStream.of(dict, pdfObject.getContents())
+                        ).decode();
                         const imgBase64 = uint8ArrayToBase64(decodedBytes);
                         const filename = `extracted_img_${Date.now()}_${imgIndex + 1}.jpg`;
                         const fileUri = FileSystem.documentDirectory + filename;
