@@ -37,6 +37,9 @@ jobs:
       - name: TypeScript type check
         run: npx tsc --noEmit
 
+      - name: PDF regression tests
+        run: npm test
+
       # expo-doctor — fail fast on real issues, no silence
       - name: Check for Expo Doctor issues
         run: npx expo-doctor@latest

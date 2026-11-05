@@ -28,6 +28,7 @@ export default function ExtractImagesScreen() {
             if (!result.canceled) {
                 setFile(result.assets[0]);
                 setImageCount(null); // Reset analysis
+                setExtractedImages([]);
             }
         } catch (err) {
             Alert.alert('Error', 'Failed to pick file');
@@ -141,6 +142,7 @@ export default function ExtractImagesScreen() {
                 <FadeInView delay={100}>
                     <AnimatedPressable
                         onPress={pickFile}
+                        disabled={loading}
                         scaleValue={0.98}
                         style={{
                             backgroundColor: isDark ? 'rgba(244, 63, 94, 0.1)' : 'rgba(244, 63, 94, 0.05)',
@@ -191,7 +193,7 @@ export default function ExtractImagesScreen() {
                 <FadeInView delay={200}>
                     <AnimatedPressable
                         onPress={analyzeImages}
-                        disabled={!file}
+                        disabled={!file || loading}
                         scaleValue={0.98}
                         style={{
                             backgroundColor: !file ? (isDark ? '#334155' : '#cbd5e1') : '#f43f5e',
